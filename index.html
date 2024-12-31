@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pixel Art Converter</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Pixel Art Converter</h1>
+    </header>
+    <div class="upload-section">
+      <label for="file-input" class="file-label">Upload Image or Video</label>
+      <input type="file" id="file-input" accept="image/*,video/*,image/gif">
+    </div>
+    <div class="controls">
+      <label for="pixel-size">Pixel Size: <span id="pixel-size-value">10</span></label>
+      <input type="range" id="pixel-size" min="1" max="50" value="10">
+      <label for="preview-mode">Preview Mode</label>
+      <input type="checkbox" id="preview-mode">
+    </div>
+    <canvas id="canvas"></canvas>
+    <div class="actions">
+      <button id="download-btn">Download Pixel Art</button>
+      <button id="reset-btn">Reset</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
