@@ -9,24 +9,29 @@ const dropZone = document.getElementById('drop-zone');
 
 let originalImage = null;
 
+// Set the maximum canvas size to prevent it from overflowing
+const maxCanvasWidth = 800;
+const maxCanvasHeight = 800;
+
 function drawImageOnCanvas(image) {
   const ctx = canvas.getContext('2d');
   const pixelSize = parseInt(pixelSizeSlider.value);
-  const width = image.width;
-  const height = image.height;
+  let width = image.width;
+  let height = image.height;
 
-  // Scale the image to fit within the canvas size
-  const maxWidth = 800;
-  const maxHeight = 800;
-  const scaleFactor = Math.min(maxWidth / width, maxHeight / height);
+  // Scale the image to fit within the canvas size, preserving aspect ratio
+  const scaleFactor = Math.min(maxCanvasWidth / width, maxCanvasHeight / height);
   const newWidth = width * scaleFactor;
   const newHeight = height * scaleFactor;
 
+  // Set the canvas size to fit the scaled image
   canvas.width = newWidth;
   canvas.height = newHeight;
 
+  // Draw the image on the canvas with the new dimensions
   ctx.drawImage(image, 0, 0, newWidth, newHeight);
 
+  // Apply pixelation if preview mode is on
   if (previewModeCheckbox.checked) {
     applyPixelation(ctx, newWidth, newHeight, pixelSize);
   }
