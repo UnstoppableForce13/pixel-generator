@@ -6,16 +6,17 @@
     <title>Pixel Art Converter</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Arial', sans-serif;
             text-align: center;
             background-color: #f4f4f9;
             margin: 0;
             padding: 0;
+            color: #333;
         }
         header {
             background-color: #007bff;
             color: white;
-            padding: 15px 0;
+            padding: 20px 0;
         }
         header h1 {
             margin: 0;
@@ -23,12 +24,12 @@
         .container {
             margin: 20px;
         }
-        input[type="file"], input[type="number"] {
+        input[type="file"], input[type="number"], input[type="checkbox"] {
             padding: 8px;
             margin: 10px 0;
         }
         canvas {
-            border: 1px solid #ccc;
+            border: 2px solid #ccc;
             margin-top: 10px;
             background-color: #fff;
         }
@@ -54,9 +55,13 @@
             border: none;
             background-color: #28a745;
             color: white;
+            transition: background-color 0.3s ease;
         }
         button:disabled {
             background-color: #aaa;
+        }
+        button:hover {
+            background-color: #218838;
         }
         #drop-zone {
             margin-top: 20px;
@@ -64,6 +69,25 @@
             padding: 20px;
             cursor: pointer;
             display: inline-block;
+        }
+        #loader {
+            display: none;
+            font-size: 18px;
+            color: #007bff;
+            margin-top: 10px;
+        }
+        .dark-mode {
+            background-color: #333;
+            color: white;
+        }
+        .dark-mode header {
+            background-color: #222;
+        }
+        .dark-mode button {
+            background-color: #007bff;
+        }
+        .dark-mode .buttons button:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
@@ -97,6 +121,8 @@
     <div id="drop-zone">
         <p>Drag & Drop an Image Here</p>
     </div>
+
+    <div id="loader">Processing...</div>
 </div>
 
 <script>
@@ -108,33 +134,29 @@
     const downloadBtn = document.getElementById('download-btn');
     const resetBtn = document.getElementById('reset-btn');
     const dropZone = document.getElementById('drop-zone');
+    const loader = document.getElementById('loader');
 
     let originalImage = null;
 
-    // Set the maximum canvas size to prevent it from overflowing
     const maxCanvasWidth = 800;
     const maxCanvasHeight = 800;
 
     function drawImageOnCanvas(image) {
         const ctx = canvas.getContext('2d');
-        const pixelSize = parseFloat(pixelSizeInput.value); // Allow decimal pixel size
+        const pixelSize = parseFloat(pixelSizeInput.value);
         let width = image.width;
         let height = image.height;
 
-        // Scale the image to fit within the canvas size, preserving aspect ratio
         const scaleFactor = Math.min(maxCanvasWidth / width, maxCanvasHeight / height);
         const newWidth = width * scaleFactor;
         const newHeight = height * scaleFactor;
 
-        // Set the canvas size to fit the scaled image
         canvas.width = newWidth;
         canvas.height = newHeight;
 
-        // Draw the image on the canvas with the new dimensions
-        ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous drawings
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(image, 0, 0, newWidth, newHeight);
 
-        // Apply pixelation if preview mode is on
         if (previewModeCheckbox.checked) {
             applyPixelation(ctx, newWidth, newHeight, pixelSize);
         }
@@ -144,17 +166,14 @@
         const imageData = ctx.getImageData(0, 0, width, height);
         const data = imageData.data;
 
-        // Loop over the image pixels and apply pixelation effect
         for (let y = 0; y < height; y += pixelSize) {
             for (let x = 0; x < width; x += pixelSize) {
                 const index = (y * width + x) * 4;
-
                 const r = data[index];
                 const g = data[index + 1];
                 const b = data[index + 2];
                 const a = data[index + 3];
 
-                // Apply pixelation to the current area
                 for (let ky = 0; ky < pixelSize; ky++) {
                     for (let kx = 0; kx < pixelSize; kx++) {
                         const pixelIndex = ((y + ky) * width + (x + kx)) * 4;
@@ -183,10 +202,12 @@
                 img.onload = () => {
                     originalImage = img;
                     drawImageOnCanvas(img);
-                    downloadBtn.disabled = false; // Enable download button after image is loaded
+                    downloadBtn.disabled = false;
+                    loader.style.display = 'none';
                 };
             };
 
+            loader.style.display = 'inline-block';
             reader.readAsDataURL(files[0]);
         }
     });
@@ -205,23 +226,20 @@
     });
 
     downloadBtn.addEventListener('click', () => {
-        if (canvas.toDataURL()) {
-            const link = document.createElement('a');
-            link.href = canvas.toDataURL();
-            link.download = 'pixel-art.png';
-            link.click();
-        }
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL();
+        link.download = 'pixel-art.png';
+        link.click();
     });
 
     resetBtn.addEventListener('click', () => {
-        fileInput.value = ''; // Reset file input
+        fileInput.value = '';
         canvas.width = 0;
         canvas.height = 0;
         originalImage = null;
-        downloadBtn.disabled = true; // Disable download button
+        downloadBtn.disabled = true;
     });
 
-    // Drag and drop functionality
     dropZone.addEventListener('dragover', (e) => {
         e.preventDefault();
         dropZone.style.borderColor = '#007bff';
@@ -245,13 +263,35 @@
                 img.onload = () => {
                     originalImage = img;
                     drawImageOnCanvas(img);
-                    downloadBtn.disabled = false; // Enable download button after image is loaded
+                    downloadBtn.disabled = false;
+                    loader.style.display = 'none';
                 };
             };
 
+            loader.style.display = 'inline-block';
             reader.readAsDataURL(files[0]);
         }
     });
+
+    // Dark Mode Toggle
+    const darkMode = localStorage.getItem('darkMode') === 'true';
+    if (darkMode) {
+        document.body.classList.add('dark-mode');
+    }
+
+    // Store dark mode setting
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark-mode');
+        localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+    }
+
+    // Optional dark mode button or keyboard shortcut to toggle
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'd') {
+            toggleDarkMode();
+        }
+    });
+
 </script>
 
 </body>
