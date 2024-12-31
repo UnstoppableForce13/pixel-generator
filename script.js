@@ -5,6 +5,7 @@ const pixelSizeValue = document.getElementById('pixel-size-value');
 const previewModeCheckbox = document.getElementById('preview-mode');
 const downloadBtn = document.getElementById('download-btn');
 const resetBtn = document.getElementById('reset-btn');
+const dropZone = document.getElementById('drop-zone');
 
 let originalImage = null;
 
@@ -14,13 +15,20 @@ function drawImageOnCanvas(image) {
   const width = image.width;
   const height = image.height;
 
-  canvas.width = width;
-  canvas.height = height;
+  // Scale the image to fit within the canvas size
+  const maxWidth = 800;
+  const maxHeight = 800;
+  const scaleFactor = Math.min(maxWidth / width, maxHeight / height);
+  const newWidth = width * scaleFactor;
+  const newHeight = height * scaleFactor;
 
-  ctx.drawImage(image, 0, 0, width, height);
+  canvas.width = newWidth;
+  canvas.height = newHeight;
+
+  ctx.drawImage(image, 0, 0, newWidth, newHeight);
 
   if (previewModeCheckbox.checked) {
-    applyPixelation(ctx, width, height, pixelSize);
+    applyPixelation(ctx, newWidth, newHeight, pixelSize);
   }
 }
 
@@ -40,7 +48,6 @@ function applyPixelation(ctx, width, height, pixelSize) {
       for (let ky = 0; ky < pixelSize; ky++) {
         for (let kx = 0; kx < pixelSize; kx++) {
           const pixelIndex = ((y + ky) * width + (x + kx)) * 4;
-
           if (pixelIndex < data.length) {
             data[pixelIndex] = r;
             data[pixelIndex + 1] = g;
@@ -100,4 +107,35 @@ resetBtn.addEventListener('click', () => {
   canvas.width = 0;
   canvas.height = 0;
   originalImage = null;
+});
+
+// Drag and drop functionality
+dropZone.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  dropZone.style.borderColor = '#007bff';
+});
+
+dropZone.addEventListener('dragleave', () => {
+  dropZone.style.borderColor = '#ccc';
+});
+
+dropZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropZone.style.borderColor = '#ccc';
+
+  const files = e.dataTransfer.files;
+  if (files.length > 0) {
+    const img = new Image();
+    const reader = new FileReader();
+
+    reader.onload = function (e) {
+      img.src = e.target.result;
+      img.onload = () => {
+        originalImage = img;
+        drawImageOnCanvas(img);
+      };
+    };
+
+    reader.readAsDataURL(files[0]);
+  }
 });
