@@ -1,33 +1,258 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pixel Art Converter</title>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Art Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #007bff;
+            color: white;
+            padding: 15px 0;
+        }
+        header h1 {
+            margin: 0;
+        }
+        .container {
+            margin: 20px;
+        }
+        input[type="file"], input[type="number"] {
+            padding: 8px;
+            margin: 10px 0;
+        }
+        canvas {
+            border: 1px solid #ccc;
+            margin-top: 10px;
+            background-color: #fff;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        .controls label, .controls span {
+            margin: 0 10px;
+        }
+        #preview-mode {
+            margin: 0 10px;
+        }
+        .buttons {
+            margin-top: 15px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            border: none;
+            background-color: #28a745;
+            color: white;
+        }
+        button:disabled {
+            background-color: #aaa;
+        }
+        #drop-zone {
+            margin-top: 20px;
+            border: 2px dashed #007bff;
+            padding: 20px;
+            cursor: pointer;
+            display: inline-block;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>Pixel Art Converter</h1>
-    </header>
-    <div class="upload-section">
-      <label for="file-input" class="file-label">Upload Image or Video</label>
-      <input type="file" id="file-input" accept="image/*,video/*,image/gif">
-    </div>
-    <div class="controls">
-      <label for="pixel-size">Pixel Size: <span id="pixel-size-value">10</span></label>
-      <input type="range" id="pixel-size" min="1" max="50" value="10">
-      <label for="preview-mode">Preview Mode</label>
-      <input type="checkbox" id="preview-mode">
-    </div>
-    <canvas id="canvas"></canvas>
-    <div class="actions">
-      <button id="download-btn">Download Pixel Art</button>
-      <button id="reset-btn">Reset</button>
-    </div>
-  </div>
 
-  <script src="script.js"></script>
+<header>
+    <h1>Pixel Art Converter</h1>
+</header>
+
+<div class="container">
+    <input type="file" id="file-input" accept="image/*">
+    <br>
+    <div class="controls">
+        <label for="pixel-size-input">Pixel Size:</label>
+        <input type="number" id="pixel-size-input" value="10" min="0.1" step="0.1">
+        <span id="pixel-size-value">10</span>
+    </div>
+
+    <div>
+        <label for="preview-mode">Preview Mode:</label>
+        <input type="checkbox" id="preview-mode">
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <div class="buttons">
+        <button id="download-btn" disabled>Download Pixel Art</button>
+        <button id="reset-btn">Reset</button>
+    </div>
+
+    <div id="drop-zone">
+        <p>Drag & Drop an Image Here</p>
+    </div>
+</div>
+
+<script>
+    const fileInput = document.getElementById('file-input');
+    const canvas = document.getElementById('canvas');
+    const pixelSizeInput = document.getElementById('pixel-size-input');
+    const pixelSizeValue = document.getElementById('pixel-size-value');
+    const previewModeCheckbox = document.getElementById('preview-mode');
+    const downloadBtn = document.getElementById('download-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const dropZone = document.getElementById('drop-zone');
+
+    let originalImage = null;
+
+    // Set the maximum canvas size to prevent it from overflowing
+    const maxCanvasWidth = 800;
+    const maxCanvasHeight = 800;
+
+    function drawImageOnCanvas(image) {
+        const ctx = canvas.getContext('2d');
+        const pixelSize = parseFloat(pixelSizeInput.value); // Allow decimal pixel size
+        let width = image.width;
+        let height = image.height;
+
+        // Scale the image to fit within the canvas size, preserving aspect ratio
+        const scaleFactor = Math.min(maxCanvasWidth / width, maxCanvasHeight / height);
+        const newWidth = width * scaleFactor;
+        const newHeight = height * scaleFactor;
+
+        // Set the canvas size to fit the scaled image
+        canvas.width = newWidth;
+        canvas.height = newHeight;
+
+        // Draw the image on the canvas with the new dimensions
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous drawings
+        ctx.drawImage(image, 0, 0, newWidth, newHeight);
+
+        // Apply pixelation if preview mode is on
+        if (previewModeCheckbox.checked) {
+            applyPixelation(ctx, newWidth, newHeight, pixelSize);
+        }
+    }
+
+    function applyPixelation(ctx, width, height, pixelSize) {
+        const imageData = ctx.getImageData(0, 0, width, height);
+        const data = imageData.data;
+
+        // Loop over the image pixels and apply pixelation effect
+        for (let y = 0; y < height; y += pixelSize) {
+            for (let x = 0; x < width; x += pixelSize) {
+                const index = (y * width + x) * 4;
+
+                const r = data[index];
+                const g = data[index + 1];
+                const b = data[index + 2];
+                const a = data[index + 3];
+
+                // Apply pixelation to the current area
+                for (let ky = 0; ky < pixelSize; ky++) {
+                    for (let kx = 0; kx < pixelSize; kx++) {
+                        const pixelIndex = ((y + ky) * width + (x + kx)) * 4;
+                        if (pixelIndex < data.length) {
+                            data[pixelIndex] = r;
+                            data[pixelIndex + 1] = g;
+                            data[pixelIndex + 2] = b;
+                            data[pixelIndex + 3] = a;
+                        }
+                    }
+                }
+            }
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+    }
+
+    fileInput.addEventListener('change', (event) => {
+        const files = event.target.files;
+        if (files.length > 0) {
+            const img = new Image();
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                img.src = e.target.result;
+                img.onload = () => {
+                    originalImage = img;
+                    drawImageOnCanvas(img);
+                    downloadBtn.disabled = false; // Enable download button after image is loaded
+                };
+            };
+
+            reader.readAsDataURL(files[0]);
+        }
+    });
+
+    pixelSizeInput.addEventListener('input', () => {
+        pixelSizeValue.textContent = pixelSizeInput.value;
+        if (originalImage) {
+            drawImageOnCanvas(originalImage);
+        }
+    });
+
+    previewModeCheckbox.addEventListener('change', () => {
+        if (originalImage) {
+            drawImageOnCanvas(originalImage);
+        }
+    });
+
+    downloadBtn.addEventListener('click', () => {
+        if (canvas.toDataURL()) {
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL();
+            link.download = 'pixel-art.png';
+            link.click();
+        }
+    });
+
+    resetBtn.addEventListener('click', () => {
+        fileInput.value = ''; // Reset file input
+        canvas.width = 0;
+        canvas.height = 0;
+        originalImage = null;
+        downloadBtn.disabled = true; // Disable download button
+    });
+
+    // Drag and drop functionality
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = '#007bff';
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.style.borderColor = '#ccc';
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = '#ccc';
+
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            const img = new Image();
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                img.src = e.target.result;
+                img.onload = () => {
+                    originalImage = img;
+                    drawImageOnCanvas(img);
+                    downloadBtn.disabled = false; // Enable download button after image is loaded
+                };
+            };
+
+            reader.readAsDataURL(files[0]);
+        }
+    });
+</script>
+
 </body>
 </html>
