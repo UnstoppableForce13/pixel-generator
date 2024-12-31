@@ -29,6 +29,7 @@ function drawImageOnCanvas(image) {
   canvas.height = newHeight;
 
   // Draw the image on the canvas with the new dimensions
+  ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous drawings
   ctx.drawImage(image, 0, 0, newWidth, newHeight);
 
   // Apply pixelation if preview mode is on
