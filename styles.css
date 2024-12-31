@@ -1,0 +1,75 @@
+/* Basic Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Global Styles */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+  color: #333;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+}
+
+.container {
+  text-align: center;
+  width: 80%;
+  max-width: 800px;
+}
+
+header h1 {
+  font-size: 2em;
+  margin-bottom: 20px;
+}
+
+.upload-section {
+  margin-bottom: 20px;
+}
+
+.file-label {
+  font-size: 1.2em;
+  cursor: pointer;
+}
+
+#file-input {
+  display: none;
+}
+
+.controls {
+  margin: 20px 0;
+}
+
+#pixel-size {
+  width: 80%;
+}
+
+#preview-mode {
+  margin-left: 10px;
+}
+
+canvas {
+  display: block;
+  margin: 20px auto;
+  border: 1px solid #ccc;
+  background-color: #fff;
+}
+
+.actions button {
+  padding: 10px 20px;
+  margin: 10px;
+  font-size: 1em;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.actions button:hover {
+  background-color: #0056b3;
+}
